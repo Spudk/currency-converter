@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>송금 통화 비교 계산기</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f4ff; padding: 20px; }
+    .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    h1 { font-size: 24px; margin-bottom: 10px; }
+    .rates, .inputs, .result { margin: 20px 0; }
+    .card { display: inline-block; width: 30%; margin-right: 2%; background: #f9f9f9; padding: 15px; border-radius: 8px; text-align: center; }
+    .card:last-child { margin-right: 0; }
+    .card h3 { margin: 0 0 10px; }
+    input { width: 80%; padding: 8px; font-size: 16px; margin-bottom: 10px; }
+    button { padding: 10px 20px; background: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    button:disabled { background: #999; }
+    .error { color: red; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>송금 통화 비교 계산기</h1>
+    <button id="refreshBtn">환율 갱신</button>
+    <div id="lastUpdate"></div>
+    <div id="error" class="error"></div>
+
+    <div class="rates">
+      <div class="card"><h3>USD</h3><div id="usdRate">-</div></div>
+      <div class="card"><h3>CNY</h3><div id="cnyRate">-</div></div>
+      <div class="card"><h3>CAD</h3><div id="cadRate">-</div></div>
+    </div>
+
+    <div class="inputs">
+      <div class="card">
+        <h3>USD 입력</h3>
+        <input type="number" id="usdInput" placeholder="금액" />
+        <div id="usdKrw"></div>
+      </div>
+      <div class="card">
+        <h3>CNY 입력</h3>
+        <input type="number" id="cnyInput" placeholder="금액" />
+        <div id="cnyKrw"></div>
+      </div>
+      <div class="card">
+        <h3>CAD 입력</h3>
+        <input type="number" id="cadInput" placeholder="금액" />
+        <div id="cadKrw"></div>
+      </div>
+    </div>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    const margin = 1.02; // 2% 마진
+    let rates = { USD: 0, CNY: 0, CAD: 0 };
+
+    async function fetchRates() {
+      document.getElementById('error').textContent = '';
+      try {
+        const res = await fetch('https://open.er-api.com/v6/latest/KRW');
+        if (!res.ok) throw new Error('HTTP error');
+        const data = await res.json();
+        const usd = Math.round((1 / data.rates.USD) * margin);
+        const cny = Math.round((1 / data.rates.CNY) * margin);
+        const cad = Math.round((1 / data.rates.CAD) * margin);
+        rates = { USD: usd, CNY: cny, CAD: cad };
+        document.getElementById('usdRate').textContent = '₩' + usd;
+        document.getElementById('cnyRate').textContent = '₩' + cny;
+        document.getElementById('cadRate').textContent = '₩' + cad;
+        document.getElementById('lastUpdate').textContent = '업데이트: ' + new Date().toLocaleString();
+      } catch (e) {
+        console.error(e);
+        document.getElementById('error').textContent = '환율 정보를 가져오지 못했습니다.';
+        rates = { USD: 1330, CNY: 187, CAD: 980 };
+      }
+    }
+
+    function calc() {
+      const usdAmt = parseFloat(document.getElementById('usdInput').value) || 0;
+      const cnyAmt = parseFloat(document.getElementById('cnyInput').value) || 0;
+      const cadAmt = parseFloat(document.getElementById('cadInput').value) || 0;
+      const usdKrw = usdAmt * rates.USD;
+      const cnyKrw = cnyAmt * rates.CNY;
+      const cadKrw = cadAmt * rates.CAD;
+      document.getElementById('usdKrw').textContent = usdAmt ? '₩' + usdKrw.toLocaleString() : '';
+      document.getElementById('cnyKrw').textContent = cnyAmt ? '₩' + cnyKrw.toLocaleString() : '';
+      document.getElementById('cadKrw').textContent = cadAmt ? '₩' + cadKrw.toLocaleString() : '';
+
+      const results = [
+        { cur: 'USD', val: usdKrw },
+        { cur: 'CNY', val: cnyKrw },
+        { cur: 'CAD', val: cadKrw }
+      ].filter(r => r.val > 0).sort((a,b) => a.val - b.val);
+
+      if (results.length >= 2) {
+        const cheapest = results[0];
+        const diff = results[results.length - 1].val - cheapest.val;
+        document.getElementById('result').innerHTML = `<b>${cheapest.cur}</b> 송금이 가장 유리합니다.<br>최대 절감: ₩${diff.toLocaleString()}`;
+      } else {
+        document.getElementById('result').textContent = '';
+      }
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', fetchRates);
+    document.getElementById('usdInput').addEventListener('input', calc);
+    document.getElementById('cnyInput').addEventListener('input', calc);
+    document.getElementById('cadInput').addEventListener('input', calc);
+
+    fetchRates();
+  </script>
+</body>
+</html>
