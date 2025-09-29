@@ -3,32 +3,60 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>송금 통화 비교 계산기 — 저장/초기화 지원</title>
+  <title>송금 통화 비교 계산기 — 시나리오(프로젝트) 저장 · 인쇄</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .card-raise{transition:transform .2s ease,box-shadow .2s ease}
     .card-raise:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(0,0,0,.12)}
     .chip{border-radius:9999px;padding:.2rem .6rem;border:1px solid rgba(0,0,0,.08);background:#fff}
     .num{font-variant-numeric:tabular-nums}
+
+    /* ===== Print (A4) ===== */
+    @media print {
+      @page { size: A4 portrait; margin: 14mm; }
+      body { background: white; }
+      .no-print { display: none !important; }
+      .print-block { page-break-inside: avoid; }
+      .card-raise, .shadow { box-shadow: none !important; }
+      .bg-white { background: #fff !important; }
+    }
   </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-indigo-50 via-sky-50 to-cyan-50">
   <div class="max-w-6xl mx-auto px-4 py-8">
     <!-- HEADER -->
-    <header class="flex flex-col md:flex-row gap-4 md:items-center md:justify-between mb-6">
+    <header class="no-print flex flex-col md:flex-row gap-4 md:items-center md:justify-between mb-6">
       <div>
         <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-indigo-600 to-cyan-500 bg-clip-text text-transparent">송금 통화 비교 계산기</h1>
-        <p class="text-slate-600 mt-1">은행 고시 vs 실시간 환율 · 금액/설정 저장 · 초기화 · 내보내기</p>
+        <p class="text-slate-600 mt-1">은행 고시 vs 실시간 · 시나리오(프로젝트)별 저장 · 인쇄/PDF</p>
       </div>
-      <div class="flex items-center gap-2 text-xs md:text-sm">
+      <div class="flex flex-wrap items-center gap-2 text-xs md:text-sm">
         <span id="sourceBadge" class="chip">소스: -</span>
         <span id="lastUpdate" class="chip">업데이트: -</span>
         <span id="lastSaved" class="chip">저장: -</span>
       </div>
     </header>
 
+    <!-- SCENARIO BAR -->
+    <section class="no-print grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="card-raise rounded-2xl bg-white border shadow p-5 md:col-span-2">
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="text-sm text-slate-600">프로젝트/시나리오</label>
+          <select id="scenarioSelect" class="rounded-lg border px-3 py-2 min-w-[220px]"></select>
+          <button id="scenarioAdd" class="rounded-lg bg-indigo-600 text-white px-3 py-2">새 시나리오</button>
+          <button id="scenarioDup" class="rounded-lg bg-slate-800 text-white px-3 py-2">복제</button>
+          <button id="scenarioRename" class="rounded-lg bg-slate-200 text-slate-800 px-3 py-2">이름 변경</button>
+          <button id="scenarioDelete" class="rounded-lg bg-rose-100 text-rose-800 px-3 py-2">삭제</button>
+        </div>
+      </div>
+      <div class="card-raise rounded-2xl bg-white border shadow p-5 flex gap-2 justify-between">
+        <button id="saveAll" class="rounded-lg bg-indigo-600 text-white px-3 py-2 font-semibold">현재 시나리오 저장</button>
+        <button id="printBtn" class="rounded-lg bg-emerald-600 text-white px-3 py-2 font-semibold">인쇄 / PDF 저장</button>
+      </div>
+    </section>
+
     <!-- MODE & CONTROLS -->
-    <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 print-block">
       <div class="card-raise rounded-2xl bg-white border shadow p-5 md:col-span-2">
         <h2 class="font-semibold text-slate-800 mb-2">모드 선택</h2>
         <div class="grid sm:grid-cols-2 gap-3">
@@ -49,27 +77,26 @@
         </div>
         <div class="mt-4 flex items-center gap-3">
           <label class="text-sm text-slate-600">마진(실시간 모드)</label>
-          <input id="marginInput" type="number" step="0.1" min="0" value="2" class="w-24 rounded-lg border px-3 py-2 text-right">
+          <input id="marginInput" type="number" step="0.1" min="0" value="0.5" class="w-24 rounded-lg border px-3 py-2 text-right">
           <span class="text-xs text-slate-500">%</span>
-          <label class="ml-4 flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-white shadow-sm border">
+          <label class="ml-4 flex items-center gap-2 text-sm px-3 py-2 rounded-xl bg-white shadow-sm border no-print">
             <input id="autoRefresh" type="checkbox" class="scale-110 accent-indigo-600">
             3분마다 자동 갱신
           </label>
         </div>
       </div>
-      <div class="card-raise rounded-2xl bg-white border shadow p-5 flex flex-col gap-2">
-        <button id="saveAll" class="w-full rounded-lg bg-indigo-600 text-white py-2 font-semibold">모든 값 저장</button>
+      <div class="card-raise rounded-2xl bg-white border shadow p-5 flex flex-col gap-2 no-print">
+        <button id="resetAmounts" class="rounded-lg bg-amber-100 text-amber-800 py-2 font-semibold">금액 초기화</button>
+        <button id="resetScenario" class="rounded-lg bg-rose-100 text-rose-800 py-2 font-semibold">시나리오 초기화</button>
         <div class="grid grid-cols-2 gap-2">
-          <button id="resetAmounts" class="rounded-lg bg-amber-100 text-amber-800 py-2 font-semibold">금액 초기화</button>
-          <button id="resetAll" class="rounded-lg bg-rose-100 text-rose-800 py-2 font-semibold">전체 초기화</button>
+          <button id="exportBtn" class="rounded-lg bg-slate-800 text-white py-2 font-semibold">내보내기(JSON)</button>
+          <button id="importBtn" class="rounded-lg bg-slate-200 text-slate-800 py-2 font-semibold">가져오기(JSON)</button>
         </div>
-        <button id="exportBtn" class="w-full rounded-lg bg-slate-800 text-white py-2 font-semibold">내보내기(JSON 복사)</button>
-        <button id="importBtn" class="w-full rounded-lg bg-slate-200 text-slate-800 py-2 font-semibold">가져오기(JSON 붙여넣기)</button>
       </div>
     </section>
 
     <!-- BANK INPUTS -->
-    <section class="rounded-2xl bg-white border shadow p-5 mb-6" id="bankInputs">
+    <section class="rounded-2xl bg-white border shadow p-5 mb-6 print-block" id="bankInputs">
       <div class="flex items-center justify-between mb-3">
         <h2 class="font-bold text-slate-800">은행 고시 — 송금보낼때</h2>
         <span class="text-xs text-slate-500">고시완료 시각 기준 입력</span>
@@ -96,11 +123,11 @@
           <input id="cadBank" type="number" step="0.01" placeholder="예: 1,0xx" class="w-full rounded-lg border px-3 py-2" />
         </div>
       </div>
-      <p class="text-xs text-slate-500 mt-2">※ 저장 시 은행 고시 값과 모드/마진/견적 금액이 로컬에 저장됩니다.</p>
+      <p class="text-xs text-slate-500 mt-2">※ 시나리오별로 저장됩니다.</p>
     </section>
 
     <!-- LIVE RATES (read-only) -->
-    <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8" id="liveCards" style="display:none">
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 print-block" id="liveCards" style="display:none">
       <div class="card-raise rounded-2xl bg-white border shadow p-5"><div class="text-slate-500 text-sm">USD (실시간+마진)</div><div id="usdLive" class="num text-2xl font-extrabold text-indigo-700">-</div></div>
       <div class="card-raise rounded-2xl bg-white border shadow p-5"><div class="text-slate-500 text-sm">CNY (실시간+마진)</div><div id="cnyLive" class="num text-2xl font-extrabold text-cyan-700">-</div></div>
       <div class="card-raise rounded-2xl bg-white border shadow p-5"><div class="text-slate-500 text-sm">CAD (실시간+마진)</div><div id="cadLive" class="num text-2xl font-extrabold text-teal-700">-</div></div>
@@ -108,7 +135,7 @@
     </section>
 
     <!-- QUOTES (AMOUNTS) -->
-    <section class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+    <section class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8 print-block">
       <div class="rounded-2xl bg-white border shadow p-5">
         <label class="block text-sm text-slate-600 mb-2">USD 견적</label>
         <input id="usdAmt" type="number" inputmode="decimal" placeholder="0.00" class="w-full rounded-lg border px-3 py-2" />
@@ -148,7 +175,7 @@
     </section>
 
     <!-- RESULT -->
-    <section id="resultWrap" class="hidden rounded-2xl bg-white border shadow p-6 mb-10">
+    <section id="resultWrap" class="rounded-2xl bg-white border shadow p-6 mb-10 print-block">
       <div class="flex items-center gap-2 mb-4">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
         <h2 class="text-xl font-bold text-slate-800">송금 통화 비교 결과</h2>
@@ -161,69 +188,72 @@
       </div>
     </section>
 
-    <footer class="text-center text-xs text-slate-500">※ 저장은 이 브라우저/기기에서만 유효합니다. 실시간 모드 환율은 중앙값에 마진(기본 2%) 반영.</footer>
+    <footer class="text-center text-xs text-slate-500">※ 시나리오별로 값이 저장됩니다. 실시간 모드 환율은 중앙값에 마진(기본 0.5%) 반영.</footer>
   </div>
 
   <script>
-    /* ===== LocalStorage Keys ===== */
-    const LS_KEYS = {
-      SETTINGS: 'fxcalc_v1_settings', // mode, margin, ratesBank
-      AMOUNTS: 'fxcalc_v1_amounts',   // USD,CNY,CAD,EUR,JPY,jpyQuoteUnit
+    /* ===== LocalStorage Keys (Profiles) ===== */
+    const LS = {
+      INDEX: 'fxcalc_profiles_index_v1',  // [ {id, name, createdAt, updatedAt} ]
+      PFX:   'fxcalc_profile_',          // fxcalc_profile_<id>
+    };
+
+    /* ===== Defaults ===== */
+    const DEFAULT_PROFILE = {
+      id: undefined,
+      name: '기본 시나리오',
+      data: {
+        mode: 'bank',
+        marginPct: 0.5, // ✅ 기본 마진 0.5%
+        ratesBank: { USD: 1415.90, CNY: 198.85, EUR: 1660.31, JPY_100: 950.98, CAD: NaN },
+        amounts: { USD: '', CNY: '', CAD: '', EUR: '', JPY: '', jpyUnit: 100 },
+      }
     };
 
     /* ===== State ===== */
-    const state = {
-      mode: 'bank',
-      marginPct: 2,
-      ratesBank: { USD: 1415.90, CNY: 198.85, EUR: 1660.31, JPY_100: 950.98, CAD: NaN },
-      ratesLive: { USD: 0, CNY: 0, CAD: 0, EUR: 0, JPY: 0 },
-      amounts: { USD: '', CNY: '', CAD: '', EUR: '', JPY: '', jpyUnit: 100 },
-      autoTimer: null,
-    };
+    let profiles = []; // index meta
+    let current = null; // {id, name, data}
 
-    /* ===== DOM Shortcuts ===== */
+    /* ===== DOM Helpers ===== */
     const $ = (id) => document.getElementById(id);
     const fmtWon = (n) => '₩' + Math.round(n).toLocaleString();
     const fmtRate = (n) => '₩' + Math.round(n).toLocaleString();
 
-    /* ===== Load Saved Data ===== */
-    function loadAll(){
-      try{
-        const s = JSON.parse(localStorage.getItem(LS_KEYS.SETTINGS) || 'null');
-        if(s){
-          state.mode = s.mode ?? state.mode;
-          state.marginPct = s.marginPct ?? state.marginPct;
-          if(s.ratesBank){
-            state.ratesBank = { ...state.ratesBank, ...s.ratesBank };
-          }
-          $('marginInput').value = state.marginPct;
-          $('usdBank').value = Number(state.ratesBank.USD || '');
-          $('cnyBank').value = Number(state.ratesBank.CNY || '');
-          $('eurBank').value = Number(state.ratesBank.EUR || '');
-          $('jpyBank').value = Number(state.ratesBank.JPY_100 || '');
-          $('cadBank').value = state.ratesBank.CAD || '';
-          if(state.mode==='live'){ $('modeLive').checked=true; } else { $('modeBank').checked=true; }
-          switchMode(state.mode);
-          if(s.savedAt){ $('lastSaved').textContent = '저장: ' + new Date(s.savedAt).toLocaleString('ko-KR'); }
-        }
-        const a = JSON.parse(localStorage.getItem(LS_KEYS.AMOUNTS) || 'null');
-        if(a){
-          state.amounts = { ...state.amounts, ...a };
-          $('usdAmt').value = a.USD || '';
-          $('cnyAmt').value = a.CNY || '';
-          $('cadAmt').value = a.CAD || '';
-          $('eurAmt').value = a.EUR || '';
-          $('jpyAmt').value = a.JPY || '';
-          $('jpyQuoteUnit').value = a.jpyUnit || 100;
-        }
-      }catch(e){ console.warn('loadAll failed', e); }
+    /* ===== Profile Persistence ===== */
+    function nanoid(){ return Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
+    function loadIndex(){ try{ profiles = JSON.parse(localStorage.getItem(LS.INDEX)||'[]')||[]; }catch{ profiles=[]; } }
+    function saveIndex(){ localStorage.setItem(LS.INDEX, JSON.stringify(profiles)); }
+    function loadProfile(id){ const raw = localStorage.getItem(LS.PFX+id); if(!raw) return null; try{ return JSON.parse(raw); }catch{ return null; } }
+    function saveProfileMeta(meta){ const idx = profiles.findIndex(p=>p.id===meta.id); if(idx>=0) profiles[idx]=meta; else profiles.push(meta); saveIndex(); }
+    function saveProfileData(id, data){ localStorage.setItem(LS.PFX+id, JSON.stringify(data)); }
+    function deleteProfile(id){ localStorage.removeItem(LS.PFX+id); profiles = profiles.filter(p=>p.id!==id); saveIndex(); }
+
+    /* ===== Scenario UI ===== */
+    function refreshScenarioSelect(){ const sel=$('scenarioSelect'); sel.innerHTML=''; profiles.forEach(p=>{ const o=document.createElement('option'); o.value=p.id; o.textContent=p.name; sel.appendChild(o); }); if(current) sel.value=current.id; }
+
+    function applyDataToUI(data){
+      // mode/margin
+      (data.mode==='live'? $('modeLive'): $('modeBank')).checked = true;
+      $('marginInput').value = data.marginPct ?? 0.5;
+      // bank rates
+      $('usdBank').value = data.ratesBank.USD ?? '';
+      $('cnyBank').value = data.ratesBank.CNY ?? '';
+      $('eurBank').value = data.ratesBank.EUR ?? '';
+      $('jpyBank').value = data.ratesBank.JPY_100 ?? '';
+      $('cadBank').value = data.ratesBank.CAD ?? '';
+      // amounts
+      $('usdAmt').value = data.amounts.USD ?? '';
+      $('cnyAmt').value = data.amounts.CNY ?? '';
+      $('cadAmt').value = data.amounts.CAD ?? '';
+      $('eurAmt').value = data.amounts.EUR ?? '';
+      $('jpyAmt').value = data.amounts.JPY ?? '';
+      $('jpyQuoteUnit').value = data.amounts.jpyUnit ?? 100;
     }
 
-    /* ===== Save & Reset ===== */
-    function saveAll(){
-      const settings = {
-        mode: state.mode,
-        marginPct: Number($('marginInput').value||state.marginPct),
+    function readDataFromUI(){
+      return {
+        mode: $('modeLive').checked ? 'live' : 'bank',
+        marginPct: Number($('marginInput').value)||0,
         ratesBank: {
           USD: parseFloat($('usdBank').value)||NaN,
           CNY: parseFloat($('cnyBank').value)||NaN,
@@ -231,110 +261,71 @@
           JPY_100: parseFloat($('jpyBank').value)||NaN,
           CAD: parseFloat($('cadBank').value)||NaN,
         },
-        savedAt: Date.now(),
+        amounts: {
+          USD: $('usdAmt').value||'', CNY: $('cnyAmt').value||'', CAD: $('cadAmt').value||'', EUR: $('eurAmt').value||'',
+          JPY: $('jpyAmt').value||'', jpyUnit: Number($('jpyQuoteUnit').value)||100,
+        },
       };
-      state.marginPct = settings.marginPct;
-      state.ratesBank = settings.ratesBank;
+    }
 
-      const amounts = {
-        USD: $('usdAmt').value || '',
-        CNY: $('cnyAmt').value || '',
-        CAD: $('cadAmt').value || '',
-        EUR: $('eurAmt').value || '',
-        JPY: $('jpyAmt').value || '',
-        jpyUnit: Number($('jpyQuoteUnit').value)||100,
-      };
-      state.amounts = amounts;
-
-      localStorage.setItem(LS_KEYS.SETTINGS, JSON.stringify(settings));
-      localStorage.setItem(LS_KEYS.AMOUNTS, JSON.stringify(amounts));
-      $('lastSaved').textContent = '저장: ' + new Date(settings.savedAt).toLocaleString('ko-KR');
-      alert('모든 값이 저장되었습니다. (이 브라우저/기기 전용)');
+    function selectScenario(id){
+      const meta = profiles.find(p=>p.id===id);
+      if(!meta) return;
+      const data = loadProfile(id) || DEFAULT_PROFILE.data;
+      current = { ...meta, data };
+      refreshScenarioSelect();
+      applyDataToUI(current.data);
+      $('lastSaved').textContent = '저장: ' + new Date(meta.updatedAt||meta.createdAt).toLocaleString('ko-KR');
+      switchMode(current.data.mode);
       recalc();
     }
 
-    function resetAmounts(){
-      state.amounts = { USD:'',CNY:'',CAD:'',EUR:'',JPY:'', jpyUnit:100 };
-      ['usdAmt','cnyAmt','cadAmt','eurAmt','jpyAmt'].forEach(id=> $(id).value='');
-      $('jpyQuoteUnit').value = 100;
-      localStorage.removeItem(LS_KEYS.AMOUNTS);
-      recalc();
+    function addScenario(name){
+      const id = nanoid();
+      const meta = { id, name: name||`새 시나리오 ${profiles.length+1}`, createdAt: Date.now(), updatedAt: Date.now() };
+      const data = JSON.parse(JSON.stringify(DEFAULT_PROFILE.data));
+      saveProfileMeta(meta); saveProfileData(id, data);
+      selectScenario(id);
     }
 
-    function resetAll(){
-      if(!confirm('모든 저장값(고시/모드/마진/금액)을 초기화할까요?')) return;
-      localStorage.removeItem(LS_KEYS.SETTINGS);
-      localStorage.removeItem(LS_KEYS.AMOUNTS);
-      location.reload();
-    }
+    function duplicateScenario(){ if(!current) return; const id=nanoid(); const meta={ id, name: current.name+' 사본', createdAt: Date.now(), updatedAt: Date.now() }; saveProfileMeta(meta); saveProfileData(id, current.data); selectScenario(id); }
+    function renameScenario(){ if(!current) return; const name = prompt('시나리오 이름', current.name)||current.name; const idx=profiles.findIndex(p=>p.id===current.id); profiles[idx].name=name; profiles[idx].updatedAt=Date.now(); saveIndex(); refreshScenarioSelect(); }
+    function removeScenario(){ if(!current) return; if(!confirm('이 시나리오를 삭제할까요?')) return; const id=current.id; deleteProfile(id); if(profiles.length===0){ addScenario('기본 시나리오'); } else { selectScenario(profiles[0].id); } }
 
-    function exportJSON(){
-      const payload = {
-        settings: JSON.parse(localStorage.getItem(LS_KEYS.SETTINGS) || 'null'),
-        amounts: JSON.parse(localStorage.getItem(LS_KEYS.AMOUNTS) || 'null'),
-      };
-      const str = JSON.stringify(payload, null, 2);
-      navigator.clipboard.writeText(str).then(()=> alert('JSON이 클립보드로 복사되었습니다.'));
-    }
+    /* ===== Export / Import ===== */
+    function exportJSON(){ const bundle = { profiles, data: profiles.reduce((acc,p)=>{ acc[p.id]=loadProfile(p.id); return acc; },{}) }; const str=JSON.stringify(bundle,null,2); navigator.clipboard.writeText(str).then(()=>alert('JSON이 클립보드로 복사되었습니다.')); }
+    function importJSON(){ const str = prompt('여기에 JSON을 붙여넣으세요'); if(!str) return; try{ const obj=JSON.parse(str); if(Array.isArray(obj.profiles)&&obj.data){ profiles=obj.profiles; saveIndex(); profiles.forEach(p=>{ if(obj.data[p.id]) saveProfileData(p.id, obj.data[p.id]); }); alert('가져오기 완료'); selectScenario(profiles[0].id); } else alert('형식이 올바르지 않습니다.'); }catch{ alert('유효한 JSON이 아닙니다.'); } }
 
-    function importJSON(){
-      const str = prompt('여기에 JSON을 붙여넣으세요');
-      if(!str) return;
-      try{
-        const obj = JSON.parse(str);
-        if(obj.settings) localStorage.setItem(LS_KEYS.SETTINGS, JSON.stringify(obj.settings));
-        if(obj.amounts) localStorage.setItem(LS_KEYS.AMOUNTS, JSON.stringify(obj.amounts));
-        alert('가져오기가 완료되었습니다. 페이지를 다시 불러옵니다.');
-        location.reload();
-      }catch(e){ alert('유효한 JSON이 아닙니다.'); }
-    }
-
-    /* ===== Mode Switch & Live Rates ===== */
-    function switchMode(mode){
-      state.mode = mode;
-      if(mode==='bank'){
-        $('bankInputs').style.display='block';
-        $('liveCards').style.display='none';
-        $('sourceBadge').textContent = '소스: 은행 고시(송금보낼때)';
-        $('lastUpdate').textContent = '업데이트: 사용자 입력';
-        if(state.autoTimer){ clearInterval(state.autoTimer); state.autoTimer=null; }
-        recalc();
-      }else{
-        $('bankInputs').style.display='none';
-        $('liveCards').style.display='grid';
-        fetchLiveRates();
-        if(state.autoTimer) clearInterval(state.autoTimer);
-        if($('autoRefresh').checked){ state.autoTimer = setInterval(fetchLiveRates, 180000); }
-      }
-    }
-
+    /* ===== Live Rates (for live mode) ===== */
     const providers = [
       async (signal) => { const u=`https://api.exchangerate.host/latest?base=KRW&symbols=USD,CNY,CAD,EUR,JPY&_=${Date.now()}`; const r=await fetch(u,{signal,cache:'no-store'}); if(!r.ok) throw new Error('exchangerate.host'); const d=await r.json(); return {provider:'exchangerate.host', rates:d.rates}; },
       async (signal) => { const u=`https://open.er-api.com/v6/latest/KRW?_=${Date.now()}`; const r=await fetch(u,{signal,cache:'no-store'}); if(!r.ok) throw new Error('open.er-api'); const d=await r.json(); if(d.result!=='success') throw new Error('erapi-bad'); return {provider:'open.er-api.com', rates:d.rates}; },
       async (signal) => { const u=`https://api.frankfurter.app/latest?from=KRW&to=USD,CNY,CAD,EUR,JPY&_=${Date.now()}`; const r=await fetch(u,{signal,cache:'no-store'}); if(!r.ok) throw new Error('frankfurter'); const d=await r.json(); return {provider:'frankfurter.app', rates:d.rates}; },
     ];
 
-    const withTimeout = (fn, ms) => new Promise((resolve,reject)=>{ const t=setTimeout(()=>reject(new Error('timeout')),ms); fn().then(v=>{clearTimeout(t);resolve(v)}).catch(e=>{clearTimeout(t);reject(e)}); });
+    function withTimeout(fn, ms){ return new Promise((resolve,reject)=>{ const t=setTimeout(()=>reject(new Error('timeout')),ms); fn().then(v=>{clearTimeout(t);resolve(v)}).catch(e=>{clearTimeout(t);reject(e)}); }); }
 
     async function fetchLiveRates(){
-      let lastErr=null; const controller=new AbortController(); const m=1+(Number($('marginInput').value||state.marginPct)/100);
+      let lastErr=null; const controller=new AbortController(); const m=1+(Number($('marginInput').value||0.5)/100);
       for(const p of providers){
         try{
           const payload = await withTimeout(()=>p(controller.signal), 7000);
           const inv = (x)=> x>0 ? 1/x : NaN;
-          state.ratesLive = {
+          const ratesLive = {
             USD: Math.round(inv(payload.rates.USD) * m),
             CNY: Math.round(inv(payload.rates.CNY) * m),
             CAD: Math.round(inv(payload.rates.CAD) * m),
             EUR: Math.round(inv(payload.rates.EUR) * m),
             JPY: Math.round(inv(payload.rates.JPY) * m),
           };
-          $('usdLive').textContent = fmtRate(state.ratesLive.USD);
-          $('cnyLive').textContent = fmtRate(state.ratesLive.CNY);
-          $('cadLive').textContent = isFinite(state.ratesLive.CAD) ? fmtRate(state.ratesLive.CAD) : '-';
-          $('eurjpyLive').textContent = `EUR ${fmtRate(state.ratesLive.EUR)} / JPY ${fmtRate(state.ratesLive.JPY)}`;
-          $('sourceBadge').textContent = `소스: ${payload.provider} + 마진 ${Number($('marginInput').value||state.marginPct)}%`;
+          $('usdLive').textContent = fmtRate(ratesLive.USD);
+          $('cnyLive').textContent = fmtRate(ratesLive.CNY);
+          $('cadLive').textContent = isFinite(ratesLive.CAD) ? fmtRate(ratesLive.CAD) : '-';
+          $('eurjpyLive').textContent = `EUR ${fmtRate(ratesLive.EUR)} / JPY ${fmtRate(ratesLive.JPY)}`;
+          $('sourceBadge').textContent = `소스: ${payload.provider} + 마진 ${Number($('marginInput').value||0.5)}%`;
           $('lastUpdate').textContent = '업데이트: ' + new Date().toLocaleString('ko-KR');
+          // keep to state in memory only; persistence occurs on save
+          current.data.ratesLive = ratesLive;
           recalc();
           return;
         }catch(e){ lastErr=e; }
@@ -343,13 +334,31 @@
       $('sourceBadge').textContent = '소스: live 실패 — 은행 고시 사용 권장';
     }
 
-    /* ===== Calculation ===== */
-    function getActiveRate(cur){
-      if(state.mode==='bank'){
-        if(cur==='JPY') return (Number($('jpyBank').value)||0) / 100; // per 1 JPY
-        return parseFloat({USD:$('usdBank').value, CNY:$('cnyBank').value, CAD:$('cadBank').value, EUR:$('eurBank').value}[cur]) || NaN;
+    /* ===== Mode & Calc ===== */
+    function switchMode(mode){
+      if(mode==='bank'){
+        $('bankInputs').style.display='block';
+        $('liveCards').style.display='none';
+        $('sourceBadge').textContent = '소스: 은행 고시(송금보낼때)';
+        $('lastUpdate').textContent = '업데이트: 사용자 입력';
+        recalc();
+      }else{
+        $('bankInputs').style.display='none';
+        $('liveCards').style.display='grid';
+        fetchLiveRates();
       }
-      return {USD:state.ratesLive.USD, CNY:state.ratesLive.CNY, CAD:state.ratesLive.CAD, EUR:state.ratesLive.EUR, JPY:state.ratesLive.JPY}[cur];
+    }
+
+    function getActiveRate(cur){
+      const mode = $('modeLive').checked ? 'live' : 'bank';
+      if(mode==='bank'){
+        if(cur==='JPY') return (parseFloat($('jpyBank').value)||0) / 100; // per 1 JPY
+        const map = {USD:'usdBank',CNY:'cnyBank',CAD:'cadBank',EUR:'eurBank'};
+        return parseFloat($(map[cur]).value)||NaN;
+      }else{
+        const live = current?.data?.ratesLive || {}; // may be undefined before first fetch
+        return {USD:live.USD, CNY:live.CNY, CAD:live.CAD, EUR:live.EUR, JPY:live.JPY}[cur];
+      }
     }
 
     function recalc(){
@@ -366,7 +375,7 @@
         CNY: getActiveRate('CNY'),
         CAD: getActiveRate('CAD'),
         EUR: getActiveRate('EUR'),
-        JPY: getActiveRate('JPY'), // per 1 JPY
+        JPY: getActiveRate('JPY'),
       };
 
       const won = {
@@ -391,11 +400,9 @@
         { label:'JPY', val:won.JPY, color:'text-rose-700', bar:'bg-rose-200' },
       ].filter(x=>x.val>0).sort((a,b)=>a.val-b.val);
 
-      const wrap = $('resultWrap');
       const list = $('comparisonList');
+      list.innerHTML='';
       if(items.length>=2){
-        wrap.classList.remove('hidden');
-        list.innerHTML='';
         const min=items[0].val, max=items[items.length-1].val;
         items.forEach((it,idx)=>{
           const pct = max>0? Math.round((it.val/max)*100) : 0;
@@ -407,36 +414,80 @@
         $('cheapest').textContent = items[0].label;
         $('extraCost').textContent = fmtWon(max - min);
         $('maxSave').textContent = fmtWon(max - min);
-      }else{
-        wrap.classList.add('hidden');
+      } else {
+        $('cheapest').textContent = '-';
+        $('extraCost').textContent = '-';
+        $('maxSave').textContent = '-';
       }
     }
 
-    /* ===== Wire Events ===== */
-    function bindEvents(){
-      $('modeBank').addEventListener('change', ()=> $('modeBank').checked && switchMode('bank'));
-      $('modeLive').addEventListener('change', ()=> $('modeLive').checked && switchMode('live'));
-      $('marginInput').addEventListener('input', ()=> state.mode==='live' && fetchLiveRates());
-      $('autoRefresh').addEventListener('change', ()=>{ if(state.mode==='live'){ if($('autoRefresh').checked){ state.autoTimer=setInterval(fetchLiveRates,180000);} else if(state.autoTimer){clearInterval(state.autoTimer); state.autoTimer=null;} } });
+    /* ===== Bindings ===== */
+    function bind(){
+      // scenario actions
+      $('scenarioAdd').addEventListener('click', ()=> addScenario(prompt('새 시나리오 이름','새 시나리오')));
+      $('scenarioDup').addEventListener('click', duplicateScenario);
+      $('scenarioRename').addEventListener('click', renameScenario);
+      $('scenarioDelete').addEventListener('click', removeScenario);
+      $('scenarioSelect').addEventListener('change', (e)=> selectScenario(e.target.value));
 
-      // bank fields update preview
-      ['usdBank','cnyBank','cadBank','eurBank','jpyBank'].forEach(id=> $(id).addEventListener('input', ()=> state.mode==='bank' && recalc()));
-
-      // amounts
-      ['usdAmt','cnyAmt','cadAmt','eurAmt','jpyAmt','jpyQuoteUnit'].forEach(id=> $(id).addEventListener('input', recalc));
-
-      $('saveAll').addEventListener('click', saveAll);
-      $('resetAmounts').addEventListener('click', resetAmounts);
-      $('resetAll').addEventListener('click', resetAll);
+      // save/reset/export/import
+      $('saveAll').addEventListener('click', ()=>{
+        if(!current) return;
+        const data = readDataFromUI();
+        current.data = data;
+        const meta = profiles.find(p=>p.id===current.id);
+        meta.updatedAt = Date.now(); saveProfileMeta(meta); saveProfileData(current.id, data);
+        $('lastSaved').textContent = '저장: ' + new Date(meta.updatedAt).toLocaleString('ko-KR');
+        alert('현재 시나리오가 저장되었습니다.');
+      });
+      $('resetAmounts').addEventListener('click', ()=>{ ['usdAmt','cnyAmt','cadAmt','eurAmt','jpyAmt'].forEach(id=> $(id).value=''); recalc(); });
+      $('resetScenario').addEventListener('click', ()=>{ if(!current) return; if(!confirm('이 시나리오의 값을 기본으로 초기화할까요?')) return; const data=JSON.parse(JSON.stringify(DEFAULT_PROFILE.data)); applyDataToUI(data); recalc(); });
       $('exportBtn').addEventListener('click', exportJSON);
       $('importBtn').addEventListener('click', importJSON);
+
+      // mode / margin / inputs
+      $('modeBank').addEventListener('change', ()=> $('modeBank').checked && switchMode('bank'));
+      $('modeLive').addEventListener('change', ()=> $('modeLive').checked && switchMode('live'));
+      $('marginInput').addEventListener('input', ()=> $('modeLive').checked && fetchLiveRates());
+      $('autoRefresh').addEventListener('change', ()=>{ if($('modeLive').checked){ if($('autoRefresh').checked){ window.__autoTimer=setInterval(fetchLiveRates,180000);} else { clearInterval(window.__autoTimer); } } });
+
+      // inputs recalc
+      ['usdBank','cnyBank','cadBank','eurBank','jpyBank','usdAmt','cnyAmt','cadAmt','eurAmt','jpyAmt','jpyQuoteUnit'].forEach(id=> $(id).addEventListener('input', recalc));
+
+      // print
+      $('printBtn').addEventListener('click', ()=> window.print());
     }
 
-    /* ===== Init ===== */
-    loadAll();
-    bindEvents();
-    if(state.mode==='bank') switchMode('bank'); else switchMode('live');
-    recalc();
+    /* ===== Bootstrap (with migration from old single-profile storage) ===== */
+    function migrateIfNeeded(){
+      // migrate from older keys if present (optional best-effort)
+      const oldSettings = localStorage.getItem('fxcalc_v1_settings');
+      const oldAmounts  = localStorage.getItem('fxcalc_v1_amounts');
+      if(oldSettings || oldAmounts){
+        const id = nanoid();
+        const meta = { id, name: '이전 데이터(마이그레이션)', createdAt: Date.now(), updatedAt: Date.now() };
+        const data = JSON.parse(JSON.stringify(DEFAULT_PROFILE.data));
+        try{ const s=JSON.parse(oldSettings||'null'); if(s){ data.mode=s.mode||'bank'; data.marginPct=s.marginPct??0.5; data.ratesBank={...data.ratesBank,...(s.ratesBank||{})}; } }catch{}
+        try{ const a=JSON.parse(oldAmounts||'null'); if(a){ data.amounts={ ...data.amounts, ...a }; } }catch{}
+        saveProfileMeta(meta); saveProfileData(id, data);
+        localStorage.removeItem('fxcalc_v1_settings'); localStorage.removeItem('fxcalc_v1_amounts');
+      }
+    }
+
+    function init(){
+      migrateIfNeeded();
+      loadIndex();
+      if(profiles.length===0){
+        const id = nanoid();
+        const meta = { id, name: DEFAULT_PROFILE.name, createdAt: Date.now(), updatedAt: Date.now() };
+        saveProfileMeta(meta); saveProfileData(id, DEFAULT_PROFILE.data);
+      }
+      refreshScenarioSelect();
+      selectScenario(profiles[0].id);
+      bind();
+    }
+
+    init();
   </script>
 </body>
 </html>
